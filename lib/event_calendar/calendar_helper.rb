@@ -46,6 +46,8 @@ module EventCalendar
     #
     # For example usage, see README.
     #
+    # Added formatting for Bank Holidays 03012013
+    #
     def calendar(options = {}, &block)
       block ||= Proc.new {|d| nil}
 
@@ -167,8 +169,9 @@ module EventCalendar
         cal << %(<tbody><tr>)
         first_day_of_week.upto(first_day_of_week+6) do |day|
           today_class = (day == Date.today) ? "ec-today-bg" : ""
+          public_holiday_class = (day.holiday?(:gb, :gb_eng) and !day.saturday? and !day.sunday?) ? "ec-public-holiday-bg" : ""
           other_month_class = (day < first) || (day > last) ? 'ec-other-month-bg' : ''
-          cal << %(<td class="ec-day-bg #{today_class} #{other_month_class}">&nbsp;</td>)
+          cal << %(<td class="ec-day-bg #{today_class} #{public_holiday_class} #{other_month_class}">&nbsp;</td>)
         end
         cal << %(</tr></tbody></table>)
 
@@ -181,6 +184,7 @@ module EventCalendar
         first_day_of_week.upto(last_day_of_week) do |day|
           cal << %(<td class="ec-day-header )
           cal << %(ec-today-header ) if options[:show_today] and (day == Date.today)
+          cal << %(ec-public-holiday-header ) if (day.holiday?(:gb, :gb_eng) and !day.saturday? and !day.sunday?)
           cal << %(ec-other-month-header ) if (day < first) || (day > last)
           cal << %(ec-weekend-day-header) if weekend?(day)
           cal << %(" style="height: #{options[:day_nums_height]}px;">)
@@ -213,10 +217,7 @@ module EventCalendar
 
                 cal << %(<td class="ec-event-cell" colspan="#{(dates[1]-dates[0]).to_i + 1}" )
                 cal << %(style="padding-top: #{options[:event_margin]}px;">)
-                cal << %(<div id="ec-#{class_name}-#{event.id}" class="ec-event )
-                if class_name != "event"
-                  cal << %(ec-#{class_name} )
-                end
+                cal << %(<div class="ec-event ec-#{class_name}-#{event.id} )
                 if no_bg
                   cal << %(ec-event-no-bg" )
                   cal << %(style="color: #{event.color}; )
